@@ -1,0 +1,12 @@
+*.pyc
+*~
+*.swp
+*.log
+*.log.*
+.braincodePassFile
+test.sh
+.DS_Store
+# pycharm
+.idea
+.env
+venv
