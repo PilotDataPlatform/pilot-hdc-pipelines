@@ -157,5 +157,3 @@ def share_dataset_version(
         except Exception as e:
             click.echo(f'Update job error: {e}')
         exit(1)
-
-    exit(1)
