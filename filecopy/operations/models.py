@@ -9,10 +9,6 @@ from enum import Enum
 from enum import unique
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Set
-from typing import Union
 
 
 def get_timestamp() -> int:
@@ -21,7 +17,7 @@ def get_timestamp() -> int:
     return round(time.time())
 
 
-def append_suffix_to_filepath(filename: str, suffix: Union[str, int], separator: str = '_') -> str:
+def append_suffix_to_filepath(filename: str, suffix: str | int, separator: str = '_') -> str:
     """Append suffix to filepath before extension."""
 
     path = Path(filename)
@@ -74,7 +70,7 @@ class Node(dict):
     def __str__(self) -> str:
         return f'{self.id} | {self.name}'
 
-    def __dict__(self) -> Dict[str, Any]:
+    def __dict__(self) -> dict[str, Any]:
         return self
 
     @property
@@ -110,7 +106,7 @@ class Node(dict):
         return self['name']
 
     @property
-    def tags(self) -> List[str]:
+    def tags(self) -> list[str]:
         return self['extended']['extra']['tags']
 
     @property
@@ -155,18 +151,18 @@ class Node(dict):
 
         return display_path
 
-    def get_attributes(self) -> Dict[str, Any]:
+    def get_attributes(self) -> dict[str, Any]:
         return self['extended']['extra'].get('attributes', {})
 
 
 class NodeList(list):
     """Store list of Nodes."""
 
-    def __init__(self, nodes: List[Dict[str, Any]]) -> None:
+    def __init__(self, nodes: list[dict[str, Any]]) -> None:
         super().__init__([Node(node) for node in nodes])
 
     @property
-    def ids(self) -> Set[str]:
+    def ids(self) -> set[str]:
         return {node.id for node in self}
 
     def filter_files(self) -> 'NodeList':

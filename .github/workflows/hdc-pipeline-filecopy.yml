@@ -1,0 +1,49 @@
+name: HDC ci/cd pipeline filecopy
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'filecopy/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'filecopy/**'
+
+jobs:
+  run_tests_hdc:
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/run_tests.yml@main
+    with:
+      python_version: '3.10.14'
+      poetry_directory: 'filecopy'
+      pytest_directory: 'filecopy'
+      coverage_target: 'operations'
+      min_coverage_percent: 47
+    secrets: inherit
+
+  build_and_publish_hdc:
+    needs: [run_tests_hdc]
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/build_and_publish.yml@main
+    with:
+      matrix_config: '["filecopy"]'
+      service_name: 'filecopy'
+      path_to_dockerfile: 'filecopy/Dockerfile'
+      docker_build_context: './filecopy'
+      path_to_pyproject: 'filecopy/pyproject.toml'
+      registry_subpath: 'pipelines'
+    secrets: inherit
+
+  deploy_hdc:
+    needs: [build_and_publish_hdc]
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/trigger_deployment.yml@main
+    with:
+      hdc_service_name: 'filecopy'
+      pyproject_folder: 'filecopy'
+    secrets: inherit

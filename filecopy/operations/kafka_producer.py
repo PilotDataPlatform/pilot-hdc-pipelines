@@ -7,7 +7,7 @@
 import asyncio
 import io
 from datetime import datetime
-from typing import Optional
+from datetime import timezone
 
 from aiokafka import AIOKafkaProducer
 from fastavro import schema
@@ -22,7 +22,7 @@ ConfigClass = get_settings()
 class KafkaProducer:
     endpoint = ConfigClass.KAFKA_URL
     topic = 'metadata.items.activity'
-    schema = 'operations/item_activity_schema.avsc'
+    schema = 'operations/metadata.items.activity.avsc'
     producer = None
 
     @classmethod
@@ -46,11 +46,11 @@ class KafkaProducer:
 
     @classmethod
     async def create_file_operation_logs(
-        self, input_file: Node, operation_type: str, operator: str, output_file: Optional[Node]
+        self, input_file: Node, operation_type: str, operator: str, output_file: Node | None
     ):
         message = {
             'activity_type': operation_type,
-            'activity_time': datetime.utcnow(),
+            'activity_time': datetime.now(timezone.utc),
             'item_id': input_file.id,
             'item_type': input_file.get('type'),
             'item_name': input_file.name,
@@ -61,6 +61,7 @@ class KafkaProducer:
             'user': operator,
             'imported_from': '',
             'changes': [],
+            'network_origin': 'unknown',
         }
         if operation_type == 'delete':
             message['item_parent_path'] = input_file.restore_path

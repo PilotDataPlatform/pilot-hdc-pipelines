@@ -41,7 +41,7 @@ class MinioBoto3Client:
         result = await self.client.copy_object(source_bucket, source_path, dest_bucket, dest_path)
         return result
 
-    async def upload_object(self, bucket, object_name, file_path, temp_path):
+    async def upload_object(self, bucket, object_name, file_path, temp_path=None):
         # Here get the total size of the size and set up the max size of each chunk
         try:
             max_size = 5 * 1024 * 1024
@@ -68,7 +68,8 @@ class MinioBoto3Client:
         except Exception:
             raise Exception('File upload failed')
         finally:
-            shutil.rmtree(temp_path)
+            if temp_path:
+                shutil.rmtree(temp_path)
         return res
 
     async def remove_object(self, src_bucket, src_obj_path):

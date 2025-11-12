@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "bids-validator"
-version = "2.2.4"
+version = "2.2.14"
 description = ""
 authors = ["Indoc Research"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
 minio = "^7.1.7"
-pydantic = "^1.9.0"
+pydantic = "1.10.19"
 python-dotenv = "0.19.1"
 python-json-logger = "^2.0.2"
 psycopg2-binary = "2.9.3"

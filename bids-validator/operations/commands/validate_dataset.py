@@ -4,7 +4,6 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-import argparse
 import asyncio
 import json
 import os
@@ -14,36 +13,21 @@ import time
 import traceback
 from datetime import datetime
 from typing import Any
-from typing import Dict
-from typing import List
 
+import click
 import requests
 from common.object_storage_adaptor.boto3_client import get_boto3_client
-from config import ConfigClass
-from locks import lock_nodes
-from locks import unlock_resource
-from models import ItemStatus
-from models import ResourceType
-from scripts.logger import logger
+from operations.config import ConfigClass
+from operations.locks import lock_nodes
+from operations.locks import unlock_resource
+from operations.logger import logger
+from operations.models import ItemStatus
+from operations.models import ResourceType
 
 TEMP_FOLDER = './dataset/'
 
 
-def parse_inputs() -> dict:
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    parser.add_argument('-d', '--dataset-code', help='Dataset code', required=True)
-    parser.add_argument('-env', '--environment', help='Environment', required=True)
-    parser.add_argument('--access-token', '--access-token', help='Access Token', required=True)
-
-    arguments = vars(parser.parse_args())
-    return arguments
-
-
-def send_message(dataset_code: str, status: str, bids_output: Dict[str, Any]) -> None:
+def send_message(dataset_code: str, status: str, bids_output: dict[str, Any]) -> None:
     queue_url = ConfigClass.QUEUE_SERVICE + 'broker/pub'
     post_json = {
         'event_type': 'BIDS_VALIDATE_NOTIFICATION',
@@ -75,7 +59,7 @@ def send_message(dataset_code: str, status: str, bids_output: Dict[str, Any]) ->
         raise
 
 
-def get_files(dataset_code: str, access_token: str) -> List[str]:
+def get_files(dataset_code: str, access_token: str) -> list[str]:
     all_files = []
 
     query = {
@@ -99,7 +83,7 @@ def get_files(dataset_code: str, access_token: str) -> List[str]:
         raise
 
 
-async def download_from_minio(files_locations: List[str]) -> None:
+async def download_from_minio(files_locations: list[str]) -> None:
     boto3_client = await get_boto3_client(
         ConfigClass.S3_URL,
         access_key=ConfigClass.S3_ACCESS_KEY,
@@ -122,19 +106,19 @@ async def download_from_minio(files_locations: List[str]) -> None:
 def getProcessOutput() -> None:
     f = open('result.txt', 'w')
     try:
-        subprocess.run(['bids-validator', TEMP_FOLDER + 'data', '--json'], universal_newlines=True, stdout=f)
+        subprocess.run(['bids-validator', TEMP_FOLDER + 'data', '--json'], text=True, stdout=f)
     except Exception as e:
         logger.error(f'BIDS validate fail: {str(e)}')
         raise
 
 
 def read_result_file() -> str:
-    f = open('result.txt', 'r')
+    f = open('result.txt')
     output = f.read()
     return output
 
 
-def send_result_to_dataset(dataset_code: str, result: Dict[str, Any]) -> str:
+def send_result_to_dataset(dataset_code: str, result: dict[str, Any]) -> str:
     query = {'validate_output': result}
     try:
         response = requests.put(ConfigClass.DATASET_SERVICE + f'/v1/dataset/bids-result/{dataset_code}', json=query)
@@ -147,16 +131,9 @@ def send_result_to_dataset(dataset_code: str, result: Dict[str, Any]) -> str:
         raise
 
 
-def main():
+def main(dataset_code: str, access_token: str):
     logger.info(f'Vault url: {os.getenv("VAULT_URL")}')
-    environment = args.get('environment', 'test')
-    logger.info(f'environment: {args.get("environment")}')
-    logger.info(f'config set: {environment}')
     try:
-        # get arguments
-        dataset_code = args['dataset_code']
-        access_token = args['access_token']
-
         logger.info(f'dataset_code: {dataset_code}')
         logger.info(f'access_token: {access_token}')
 
@@ -202,10 +179,17 @@ def main():
             unlock_resource(resource_key, operation)
 
 
-if __name__ == '__main__':
+@click.command()
+@click.option('-d', '--dataset-code', help='Dataset code', type=str, required=True)
+@click.option('-env', '--environment', help='Environment', type=str, required=False)
+@click.option('-access-token', '--access-token', help='Access Token', type=str, required=True)
+def validate_dataset(
+    dataset_code: str,
+    environment: str,
+    access_token: str,
+):
     try:
-        args = parse_inputs()
-        main()
+        main(dataset_code, access_token)
     except Exception as e:
         logger.error(f'[Validate Failed] {str(e)}')
         for info in traceback.format_stack():

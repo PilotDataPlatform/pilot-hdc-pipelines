@@ -5,16 +5,14 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Dict
-from typing import List
 
 import requests
-from config import ConfigClass
-from models import ItemStatus
-from models import ResourceType
+from operations.config import ConfigClass
+from operations.models import ItemStatus
+from operations.models import ResourceType
 
 
-def get_all_children_nodes(parent_path: str, zone: str, container_code: str, access_token: str) -> List[Dict[str, Any]]:
+def get_all_children_nodes(parent_path: str, zone: str, container_code: str, access_token: str) -> list[dict[str, Any]]:
     item_zone = {'greenroom': 0, 'core': 1}.get(zone)
     parameters = {
         'status': ItemStatus.ACTIVE,

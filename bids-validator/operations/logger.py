@@ -7,7 +7,7 @@
 import logging
 
 from common import configure_logging
-from scripts.config import get_settings
+from operations.config import get_settings
 
 settings = get_settings()
 

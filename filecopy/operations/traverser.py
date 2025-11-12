@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from pathlib import Path
-from typing import Union
 
 from operations.managers import NodeManager
 from operations.models import Node
@@ -18,7 +17,7 @@ class Traverser:
     def __init__(self, node_manager: NodeManager) -> None:
         self.node_manager = node_manager
 
-    def _traverse_tree(self, nodes: NodeList, source_folder: Node, destination_folder: Union[Path, Node]) -> None:
+    def _traverse_tree(self, nodes: NodeList, source_folder: Node, destination_folder: Path | Node) -> None:
         excluded_geids = self.node_manager.exclude_nodes(nodes)
         errors = []
 
@@ -36,7 +35,7 @@ class Traverser:
         if errors:
             raise Exception(errors)
 
-    def traverse_tree(self, source_folder: Node, destination_folder: Union[Path, Node]) -> None:
+    def traverse_tree(self, source_folder: Node, destination_folder: Path | Node) -> None:
         """Start tree traversing."""
         nodes = self.node_manager.get_tree(source_folder)
         self._traverse_tree(nodes, source_folder, destination_folder)

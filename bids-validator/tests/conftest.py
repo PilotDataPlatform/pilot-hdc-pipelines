@@ -6,14 +6,13 @@
 
 import random
 import uuid
+from collections.abc import Callable
 from typing import Any
-from typing import Callable
-from typing import Dict
 
 import faker
 import pytest
-from scripts.models import ItemStatus
-from scripts.models import ResourceType
+from operations.models import ItemStatus
+from operations.models import ResourceType
 
 
 class Faker(faker.Faker):
@@ -27,7 +26,7 @@ def fake() -> Faker:
 
 
 @pytest.fixture
-def create_node(fake) -> Callable[..., Dict[str, Any]]:
+def create_node(fake) -> Callable[..., dict[str, Any]]:
     def _create_node(
         id_=None,
         parent=None,
@@ -46,7 +45,7 @@ def create_node(fake) -> Callable[..., Dict[str, Any]]:
         attributes=None,
         location_uri='minio_path',
         version='fake_version',
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if id_ is None:
             id_ = fake.pyint()
 
