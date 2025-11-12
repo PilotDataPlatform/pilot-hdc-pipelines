@@ -5,8 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from typing import Any
-from typing import Dict
-from typing import List
 
 from requests import Session
 
@@ -19,7 +17,7 @@ class ApprovalServiceClient:
         self.request_id = request_id
         self.client = Session()
 
-    def update_copy_status(self, entity_id: str) -> List[Dict[str, Any]]:
+    def update_copy_status(self, entity_id: str) -> list[dict[str, Any]]:
         """Update copy status field for approval entity."""
         payload = {'entities': [entity_id], 'copy_status': 'copied'}
         response = self.client.put(f'{self.endpoint}/request/{self.request_id}/copy-status', json=payload)

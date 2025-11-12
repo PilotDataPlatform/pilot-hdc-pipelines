@@ -8,9 +8,6 @@ from enum import Enum
 from enum import unique
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 
 from operations.logger import logger
 from requests import Session
@@ -40,7 +37,7 @@ class DataopsServiceClient:
         self.endpoint_v2 = f'{endpoint}/v2'
         self.client = Session()
 
-    def lock_resources(self, resource_keys: List[Path], operation: ResourceLockOperation) -> Dict[str, Any]:
+    def lock_resources(self, resource_keys: list[Path], operation: ResourceLockOperation) -> dict[str, Any]:
         resource_keys = list(map(str, resource_keys))
 
         logger.info(f'Performing "{operation}" lock for resource keys: {resource_keys}.')
@@ -60,7 +57,7 @@ class DataopsServiceClient:
         logger.info(f'Successfully "{operation}" locked resource keys: {resource_keys}.')
         return response.json()
 
-    def unlock_resources(self, resource_keys: List[Path], operation: ResourceLockOperation) -> Dict[str, Any]:
+    def unlock_resources(self, resource_keys: list[Path], operation: ResourceLockOperation) -> dict[str, Any]:
         resource_keys = list(map(str, resource_keys))
 
         logger.info(f'Performing "{operation}" unlock for resource keys: {resource_keys}.')
@@ -89,7 +86,7 @@ class DataopsServiceClient:
         container_code: str,
         action_type: str,
         status: JobStatus,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create task-stream record for updated job status."""
         response = self.client.post(
             f'{self.endpoint_v1}/task-stream/',
@@ -113,7 +110,7 @@ class DataopsServiceClient:
 
         return response.json()
 
-    def get_zip_preview(self, file_geid: str) -> Optional[Dict[str, Any]]:
+    def get_zip_preview(self, file_geid: str) -> dict[str, Any] | None:
         response = self.client.get(
             f'{self.endpoint_v1}/archive',
             params={
@@ -133,7 +130,7 @@ class DataopsServiceClient:
 
         return response.json()
 
-    def create_zip_preview(self, file_id: str, archive_preview: Dict[str, Any]) -> Dict[str, Any]:
+    def create_zip_preview(self, file_id: str, archive_preview: dict[str, Any]) -> dict[str, Any]:
         response = self.client.post(
             f'{self.endpoint_v1}/archive',
             json={

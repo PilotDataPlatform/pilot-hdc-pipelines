@@ -1,0 +1,49 @@
+name: HDC ci/cd pipeline bids-validator
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bids-validator/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'bids-validator/**'
+
+jobs:
+  run_tests_hdc:
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/run_tests.yml@main
+    with:
+      python_version: '3.10.14'
+      poetry_directory: 'bids-validator'
+      pytest_directory: 'bids-validator'
+      coverage_target: 'operations'
+      min_coverage_percent: 39
+    secrets: inherit
+
+  build_and_publish_hdc:
+    needs: [run_tests_hdc]
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/build_and_publish.yml@main
+    with:
+      matrix_config: '["bids-validator"]'
+      service_name: 'bids-validator'
+      path_to_dockerfile: 'bids-validator/Dockerfile'
+      docker_build_context: './bids-validator'
+      path_to_pyproject: 'bids-validator/pyproject.toml'
+      registry_subpath: 'pipelines'
+    secrets: inherit
+
+  deploy_hdc:
+    needs: [build_and_publish_hdc]
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/trigger_deployment.yml@main
+    with:
+      hdc_service_name: 'bids-validator'
+      pyproject_folder: 'bids-validator'
+    secrets: inherit

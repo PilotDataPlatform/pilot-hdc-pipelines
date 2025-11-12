@@ -7,10 +7,6 @@
 import asyncio
 import time
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 from common import ProjectClient
 from common import ProjectException
@@ -50,7 +46,7 @@ class MetadataServiceClient:
         nodes = self.get_items_by_ids([node_id])
         return nodes[node_id]
 
-    def get_items_by_ids(self, ids: list) -> Dict[str, Node]:
+    def get_items_by_ids(self, ids: list) -> dict[str, Node]:
         parameter = {'ids': ids}
         response = self.client.get(f'{self.endpoint_v1}items/batch/', params=parameter)
         if response.status_code != 200:
@@ -101,7 +97,7 @@ class MetadataServiceClient:
         nodes = NodeList(response.json()['result'])
         return nodes
 
-    def update_node(self, node: Node, update_json: Dict[str, Any]) -> Dict[str, Any]:
+    def update_node(self, node: Node, update_json: dict[str, Any]) -> dict[str, Any]:
         response = self.client.put(url=f'{self.endpoint_v1}item/', params={'id': node.get('id')}, json=update_json)
 
         if response.status_code != 200:
@@ -110,8 +106,8 @@ class MetadataServiceClient:
         return response.json()
 
     def update_copied_file_node(
-        self, project: str, node: Node, system_tags: List[str], source_file: Node, minio_client: MinioBoto3Client
-    ) -> Tuple[Dict[str, Any], str]:
+        self, project: str, node: Node, system_tags: list[str], source_file: Node, minio_client: MinioBoto3Client
+    ) -> tuple[dict[str, Any], str]:
         try:
             file_display_path = self.format_folder_path(node, '/')
             location = f'minio://{self.minio_endpoint}/core-{project}/{file_display_path}'
@@ -184,14 +180,15 @@ class MetadataServiceClient:
         parent_node: Node,
         item_type: ResourceType,
         status: ItemStatus,
-        timestamp: Optional[int],
+        timestamp: int | None,
+        zone: ZoneType = ZoneType.CORE,
     ) -> Node:
 
         payload = {
             'parent': parent_node.id,
             'parent_path': self.format_folder_path(parent_node, '/'),
             'type': item_type,
-            'zone': ZoneType.CORE,
+            'zone': zone,
             'name': source_node.name,
             'size': source_node.size,
             'owner': source_node.owner,
@@ -220,7 +217,40 @@ class MetadataServiceClient:
         new_node = response.json()['result']
         return Node(new_node)
 
-    def get_node_by_full_path(self, name: str, parent_path: str, container_code: str) -> Dict[str, Any]:
+    def register_file(
+        self,
+        project: str,
+        source_node: Node,
+        parent_node: Node,
+        zone: ZoneType = ZoneType.CORE,
+    ) -> Node:
+        return self.register_node(
+            project, source_node, parent_node, ResourceType.FILE, ItemStatus.REGISTERED, None, zone
+        )
+
+    def register_folder(
+        self,
+        project: str,
+        source_node: Node,
+        parent_node: Node,
+        zone: ZoneType = ZoneType.CORE,
+    ) -> Node:
+        return self.register_node(project, source_node, parent_node, ResourceType.FOLDER, ItemStatus.ACTIVE, None, zone)
+
+    def get_name_folder(self, username: str, project_code: str, zone: ZoneType = ZoneType.GREENROOM) -> Node:
+        params = {
+            'name': username,
+            'container_code': project_code,
+            'container_type': 'project',
+            'zone': zone,
+            'status': ItemStatus.ACTIVE,
+        }
+        response = self.client.get(f'{self.endpoint_v1}item/', params=params)
+        if response.status_code != 200:
+            raise Exception(f'Folder {project_code}/{zone.name}/{username} does not exist')
+        return Node(response.json()['result'])
+
+    def get_node_by_full_path(self, name: str, parent_path: str, container_code: str) -> dict[str, Any]:
         param = {
             'name': name,
             'parent_path': parent_path,
@@ -241,7 +271,7 @@ class MetadataServiceClient:
             return f'{parent_path}{divider}{node.get("name")}'
         return node.get('name')
 
-    def move_node_to_trash(self, node_id: str) -> List:
+    def move_node_to_trash(self, node_id: str) -> list:
         patch_node_url = self.endpoint_v1 + 'item/'
         parameter = {'id': node_id, 'status': ItemStatus.ARCHIVED}
         response = self.client.patch(patch_node_url, params=parameter)
@@ -276,7 +306,7 @@ class MetadataServiceClient:
 
         return trash_node
 
-    def remove_registrated_nodes(self, registered_file_nodes: Dict[str, Node]) -> None:
+    def remove_registrated_nodes(self, registered_file_nodes: dict[str, Node]) -> None:
         """Remove the registrated file nodes when copy failed for tear down."""
         delete_node_url = self.endpoint_v1 + 'item/'
         for item in registered_file_nodes:
@@ -288,8 +318,8 @@ class MetadataServiceClient:
                     raise Exception(f'Unable to patch node with node id "{node.id}".')
 
     def register_nodes(
-        self, register_file_nodes: List[NodeToRegister], project_code: str, timestamp: int
-    ) -> Dict[str, Node]:
+        self, register_file_nodes: list[NodeToRegister], project_code: str, timestamp: int
+    ) -> dict[str, Node]:
         """Registered the file nodes."""
         try:
             registered_file_nodes = {}

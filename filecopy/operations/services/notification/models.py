@@ -6,7 +6,6 @@
 
 import json
 from enum import Enum
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -60,7 +59,7 @@ class PipelineNotification(BaseModel):
     initiator_username: str
     project_code: str
     source: Location
-    destination: Optional[Location]
+    destination: Location | None
     targets: conlist(Target, min_items=1)
 
     def to_json(self):

@@ -4,9 +4,6 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
-from typing import List
-from typing import Optional
-
 from operations.logger import logger
 from operations.models import Node
 from operations.services.notification.models import InvolvementType
@@ -28,7 +25,7 @@ class NotificationServiceClient:
         endpoint: str,
         include_nodes: dict[str, Node],
         source_folder: Node,
-        destination_folder: Optional[Node],
+        destination_folder: Node | None,
         project_code: str,
         pipeline_action: PipelineAction,
         pipeline_status: PipelineStatus,
@@ -52,7 +49,7 @@ class NotificationServiceClient:
     def set_location(self, entity: Node) -> Location:
         return Location(id=entity.id, path=str(entity.display_path), zone=entity.zone)
 
-    def set_targets(self) -> List[Target]:
+    def set_targets(self) -> list[Target]:
         targets = []
         for _node, file_node in self.include_nodes.items():
             targets.append(Target(id=file_node.id, name=file_node.name, type=TargetType(file_node.entity_type)))

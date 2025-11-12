@@ -5,8 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 from pathlib import Path
-from typing import Optional
-from typing import Union
 
 from operations.models import append_suffix_to_filepath
 from operations.models import get_timestamp
@@ -27,7 +25,7 @@ class DuplicatedFileNames:
     def __str__(self) -> str:
         return f'Count: {len(self.files)}'
 
-    def add(self, filepath: Union[Path, str]) -> str:
+    def add(self, filepath: Path | str) -> str:
         """Store information about duplicated file and return new filename that should be used."""
 
         path = Path(filepath)
@@ -36,7 +34,7 @@ class DuplicatedFileNames:
 
         return self.files[path]
 
-    def get(self, filepath: Union[Path, str], default: Optional[str] = '') -> str:
+    def get(self, filepath: Path | str, default: str | None = '') -> str:
         """Return filename by filepath if it exists or return default value."""
 
         path = Path(filepath)

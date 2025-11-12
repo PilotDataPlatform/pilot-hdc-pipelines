@@ -7,11 +7,6 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Union
 
 from operations.duplicated_file_names import DuplicatedFileNames
 from operations.kafka_producer import KafkaProducer
@@ -22,6 +17,7 @@ from operations.models import Node
 from operations.models import NodeList
 from operations.models import NodeToRegister
 from operations.models import ResourceType
+from operations.models import ZoneType
 from operations.models import get_timestamp
 from operations.services.approval.client import ApprovalServiceClient
 from operations.services.dataops.client import DataopsServiceClient
@@ -40,17 +36,17 @@ class NodeManager:
         nodes = self.metadata_service_client.get_nodes_tree(source_folder.id, False)
         return nodes
 
-    def exclude_nodes(self, nodes: NodeList) -> Set[str]:
+    def exclude_nodes(self, nodes: NodeList) -> set[str]:
         """Return set of ids that should be excluded when copying from this source folder."""
 
         return set()
 
-    def process_file(self, source_file: Node, destination_folder: Union[Path, Node]) -> None:
+    def process_file(self, source_file: Node, destination_folder: Path | Node) -> None:
         """Process one file."""
 
         raise NotImplementedError
 
-    def process_folder(self, source_folder: Node, destination_parent_folder: Union[Path, Node]) -> Union[Path, Node]:
+    def process_folder(self, source_folder: Node, destination_parent_folder: Path | Node) -> Path | Node:
         """Process one folder."""
 
         raise NotImplementedError
@@ -62,9 +58,9 @@ class BaseCopyManager(NodeManager):
     def __init__(
         self,
         metadata_service_client: MetadataServiceClient,
-        approval_service_client: Optional[ApprovalServiceClient],
-        approved_entities: Optional[List[str]],
-        include_ids: Optional[Set[str]],
+        approval_service_client: ApprovalServiceClient | None,
+        approved_entities: list[str] | None,
+        include_ids: set[str] | None,
     ) -> None:
         super().__init__(metadata_service_client)
 
@@ -83,7 +79,7 @@ class BaseCopyManager(NodeManager):
 
         return node.id in self.approved_entities
 
-    def exclude_nodes(self, nodes: NodeList) -> Set[str]:
+    def exclude_nodes(self, nodes: NodeList) -> set[str]:
         """Return set of geids that should be excluded when copying from this source folder."""
         if self.approved_entities is not None:
             excluded_geids = nodes.ids.difference(self.approved_entities)
@@ -98,12 +94,12 @@ class BaseCopyManager(NodeManager):
 
         return excluded_geids
 
-    def process_file(self, source_file: Node, destination_folder: Union[Path, Node]) -> None:
+    def process_file(self, source_file: Node, destination_folder: Path | Node) -> None:
         """Process one file."""
 
         raise NotImplementedError
 
-    def process_folder(self, source_folder: Node, destination_parent_folder: Union[Path, Node]) -> Union[Path, Node]:
+    def process_folder(self, source_folder: Node, destination_parent_folder: Path | Node) -> Path | Node:
         """Process one folder."""
 
         raise NotImplementedError
@@ -116,9 +112,9 @@ class CopyManager:
         self,
         metadata_service_client: MetadataServiceClient,
         dataops_client: DataopsServiceClient,
-        approval_service_client: Optional[ApprovalServiceClient],
-        approved_entities: List[str],
-        system_tags: List[str],
+        approval_service_client: ApprovalServiceClient | None,
+        approved_entities: list[str],
+        system_tags: list[str],
         project: Node,
         operator: str,
         minio_client: MinioBoto3Client,
@@ -188,12 +184,12 @@ class CopyManager:
         self._update_approval_entity_copy_status_for_node(source_file)
         return node
 
-    def process_files(self, registered_file_nodes: Dict[str, Node], source_file_node: Dict[str, Node]) -> None:
+    def process_files(self, registered_file_nodes: dict[str, Node], source_file_node: dict[str, Node]) -> None:
         for item in registered_file_nodes:
             updated_node = self._process_file(source_file_node[item], registered_file_nodes[item])
             registered_file_nodes[item] = updated_node
 
-    def process_folders(self, source_folders: Dict[str, Node]) -> None:
+    def process_folders(self, source_folders: dict[str, Node]) -> None:
         update_json = {'system_tags': self.system_tags}
         for _, item in source_folders.items():
             self.metadata_service_client.update_node(item, update_json)
@@ -205,14 +201,14 @@ class CopyPreparationManager(BaseCopyManager):
     def __init__(
         self,
         metadata_service_client: MetadataServiceClient,
-        approval_service_client: Optional[ApprovalServiceClient],
-        approved_entities: List[str],
+        approval_service_client: ApprovalServiceClient | None,
+        approved_entities: list[str],
         project_code: str,
         source_zone: str,
         destination_zone: str,
         source_bucket: Path,
         destination_bucket: Path,
-        include_geids: Optional[Set[str]],
+        include_geids: set[str] | None,
     ) -> None:
         super().__init__(metadata_service_client, approval_service_client, approved_entities, include_geids)
 
@@ -266,7 +262,7 @@ class DeleteManager(NodeManager):
         pipeline_name: str,
         pipeline_desc: str,
         operation_type: str,
-        include_geids: Optional[Set[str]],
+        include_geids: set[str] | None,
     ) -> None:
         super().__init__(metadata_service_client)
 
@@ -285,7 +281,7 @@ class DeleteManager(NodeManager):
 
         self.redis_client = RedisClient()
 
-    def exclude_nodes(self, nodes: NodeList) -> Set[str]:
+    def exclude_nodes(self, nodes: NodeList) -> set[str]:
         if self.include_geids is None:
             return set()
 
@@ -330,7 +326,7 @@ class DeletePreparationManager(NodeManager):
         project_code: str,
         source_zone: str,
         source_bucket: Path,
-        include_geids: Optional[Set[str]],
+        include_geids: set[str] | None,
     ) -> None:
         super().__init__(metadata_service_client)
 
@@ -342,7 +338,7 @@ class DeletePreparationManager(NodeManager):
         self.duplicated_files = DuplicatedFileNames()
         self.write_lock_paths = []
 
-    def exclude_nodes(self, nodes: NodeList) -> Set[str]:
+    def exclude_nodes(self, nodes: NodeList) -> set[str]:
         if self.include_geids is None:
             return set()
 
@@ -371,3 +367,86 @@ class DeletePreparationManager(NodeManager):
         self.write_lock_paths.append(source_path)
 
         return destination_parent_path
+
+
+class ShareDatasetManager(NodeManager):
+
+    def __init__(
+        self,
+        metadata_service_client: MetadataServiceClient,
+        minio_client: MinioBoto3Client,
+        destination_project_code: str,
+        destination_zone: ZoneType,
+        operator: str,
+    ) -> None:
+        super().__init__(metadata_service_client)
+
+        self.minio_client = minio_client
+        self.destination_project_code = destination_project_code
+        self.destination_zone = destination_zone
+        self.operator = operator
+
+    def get_tree(self, source_folder: Node) -> NodeList:
+        nodes = []
+
+        source_folder_path = source_folder.parent_path / source_folder.name
+        for path in source_folder_path.iterdir():
+            obj_stat = path.stat()
+            type_ = ResourceType.FILE
+            size = obj_stat.st_size
+            if path.is_dir():
+                type_ = ResourceType.FOLDER
+                size = 0
+            nodes.append(
+                {
+                    'id': obj_stat.st_ino,
+                    'name': path.name,
+                    'parent_path': path.parent,
+                    'type': type_,
+                    'size': size,
+                    'owner': self.operator,
+                    'extended': {'extra': {'tags': []}},
+                }
+            )
+
+        return NodeList(nodes)
+
+    def process_file(self, source_file: Node, destination_folder: Node) -> None:
+        target_file_node = self.metadata_service_client.register_file(
+            self.destination_project_code,
+            source_file,
+            destination_folder,
+            self.destination_zone,
+        )
+
+        destination_bucket = f'gr-{self.destination_project_code}'
+        destination_file_path = f'{destination_folder.parent_path}/{destination_folder.name}/{source_file.name}'
+
+        upload_coroutine = self.minio_client.client.upload_file(
+            destination_bucket,
+            str(source_file.parent_path / source_file.name),
+            destination_file_path,
+        )
+        if source_file.size > 5e9:
+            upload_coroutine = self.minio_client.upload_object(
+                destination_bucket,
+                destination_file_path,
+                str(source_file.parent_path / source_file.name),
+            )
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(upload_coroutine)
+
+        new_location = f'minio://{self.minio_client.minio_endpoint}/{destination_bucket}/{destination_file_path}'
+        self.metadata_service_client.update_node(
+            target_file_node, {'status': ItemStatus.ACTIVE, 'location_uri': new_location}
+        )
+
+    def process_folder(self, source_folder: Node, destination_parent_folder: Node) -> Node:
+        target_folder_node = self.metadata_service_client.register_folder(
+            self.destination_project_code,
+            source_folder,
+            destination_parent_folder,
+            self.destination_zone,
+        )
+
+        return target_folder_node

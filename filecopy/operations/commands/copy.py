@@ -8,7 +8,6 @@ import asyncio
 import atexit
 import json
 from pathlib import Path
-from typing import Optional
 
 import click
 from common import ProjectClient
@@ -50,7 +49,7 @@ def copy(
     session_id: str,
     project_code: str,
     operator: str,
-    request_info: Optional[str],
+    request_info: str | None,
     access_token: str,
 ):
     """Copy files from source geid into destination geid."""
