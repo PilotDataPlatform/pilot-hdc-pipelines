@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "bids-validator"
-version = "2.2.14"
+version = "2.2.15"
 description = ""
 authors = ["Indoc Research"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10,<3.11"
 minio = "^7.1.7"
 pydantic = "1.10.19"
 python-dotenv = "0.19.1"
@@ -15,7 +15,7 @@ click = "8.1.2"
 SQLAlchemy = "^1.4.36"
 requests = "2.24.0"
 asyncio = "^3.4.3"
-pilot-platform-common = "0.3.0"
+pilot-platform-common = "0.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "7.1.2"

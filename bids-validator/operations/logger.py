@@ -7,10 +7,11 @@
 import logging
 
 from common import configure_logging
+from common.logging.logging import Logger
 from operations.config import get_settings
 
 settings = get_settings()
 
-logger = logging.getLogger('pilot.bids-validator')
+logger: Logger = logging.getLogger('pilot.bids-validator')
 
 configure_logging(settings.LOGGING_LEVEL, settings.LOGGING_FORMAT)

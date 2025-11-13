@@ -13,6 +13,7 @@ import click
 from common import ProjectClient
 from operations.config import get_settings
 from operations.kafka_producer import KafkaProducer
+from operations.logger import logger
 from operations.managers import CopyManager
 from operations.managers import CopyPreparationManager
 from operations.minio_boto3_client import MinioBoto3Client
@@ -84,6 +85,7 @@ def copy(
     #  Next sprint edit notification service client - https://indocconsortium.atlassian.net/browse/PILOT-1830
     nodes = metadata_service_client.get_items_by_ids([source_id, destination_id])
     include_nodes = metadata_service_client.get_items_by_ids(include_ids[0].split(','))
+    include_node_ids = list(include_nodes.keys())
     source_folder = nodes[source_id]
     destination_folder = nodes[destination_id]
     target_names = [f'{item["parent_path"]}/{item["name"]}' for item in include_nodes.values()]
@@ -101,6 +103,14 @@ def copy(
     )
 
     try:
+        logger.audit(
+            'Attempting to copy items (recursively including child items).',
+            project_code=project_code,
+            operator=operator,
+            node_ids=include_node_ids,
+            source_id=source_folder.id,
+            destination_id=destination_folder.id,
+        )
         if request_info:
             request_dict = json.loads(request_info)
             request_id = list(request_dict.keys())[0]
@@ -171,7 +181,23 @@ def copy(
         )
         notification_client.send_notifications()
         click.echo('Copy operation has been finished successfully.')
+        logger.audit(
+            'Successfully managed to copy items (recursively including child items).',
+            project_code=project_code,
+            operator=operator,
+            node_ids=include_node_ids,
+            source_id=source_folder.id,
+            destination_id=destination_folder.id,
+        )
     except Exception as e:
+        logger.audit(
+            'Received an unexpected error while attempting to copy items (recursively including child items).',
+            project_code=project_code,
+            operator=operator,
+            node_ids=include_node_ids,
+            source_id=source_folder.id,
+            destination_id=destination_folder.id,
+        )
         click.echo(f'Exception occurred while performing copy operation:{e}')
         try:
             notification_client.set_status(PipelineStatus.FAILURE)

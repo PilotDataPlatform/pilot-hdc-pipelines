@@ -12,6 +12,7 @@ import click
 from common import ProjectClient
 from operations.config import get_settings
 from operations.kafka_producer import KafkaProducer
+from operations.logger import logger
 from operations.managers import DeleteManager
 from operations.managers import DeletePreparationManager
 from operations.minio_boto3_client import MinioBoto3Client
@@ -74,8 +75,16 @@ def delete(
     # TODO: This sprint assume metadata service can always get info,
     #  Next sprint edit notification service client - https://indocconsortium.atlassian.net/browse/PILOT-1830
     source_folder = metadata_service_client.get_item_by_id(source_id)
+    source_path = None
+    source_zone = None
+    if source_folder:
+        source_path = str(source_folder.display_path)
+        source_zone = (
+            settings.GREEN_ZONE_LABEL if source_folder.zone == ZoneType.GREENROOM else settings.CORE_ZONE_LABEL
+        )
     destination_folder = Path()
     include_nodes = metadata_service_client.get_items_by_ids(include_ids[0].split(','))
+    include_node_ids = list(include_nodes.keys())
     target_names = [f'{item["parent_path"]}/{item["name"]}' for item in include_nodes.values()]
     target_type = 'batch' if len(target_names) > 1 else next(iter(include_nodes.values()))['type']
     notification_client = NotificationServiceClient(
@@ -91,6 +100,15 @@ def delete(
     )
 
     try:
+        logger.audit(
+            'Attempting to move items into trash bin.',
+            project_code=project_code,
+            operator=operator,
+            node_ids=include_node_ids,
+            source_id=source_id,
+            source_path=source_path,
+            source_zone=source_zone,
+        )
         source_zone = settings.GREEN_ZONE_LABEL
         source_bucket = Path(f'gr-{project_code}')
         if source_folder['zone'] == ZoneType.CORE:
@@ -147,7 +165,25 @@ def delete(
         )
         notification_client.send_notifications()
         click.echo('Delete operation has been finished successfully.')
+        logger.audit(
+            'Successfully managed to move items into trash bin.',
+            project_code=project_code,
+            operator=operator,
+            node_ids=include_node_ids,
+            source_id=source_id,
+            source_path=source_path,
+            source_zone=source_zone,
+        )
     except Exception as e:
+        logger.audit(
+            'Received an unexpected error while attempting to move items into trash bin.',
+            project_code=project_code,
+            operator=operator,
+            node_ids=include_node_ids,
+            source_id=source_id,
+            source_path=source_path,
+            source_zone=source_zone,
+        )
         click.echo(f'An exception occurred while performing delete operation: {e}')
         try:
             notification_client.set_status(PipelineStatus.FAILURE)

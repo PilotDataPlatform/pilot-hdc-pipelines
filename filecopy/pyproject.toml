@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "filecopy"
-version = "2.2.14"
+version = "2.2.15"
 description = ""
 authors = ["Indoc Research"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10,<3.11"
 logger = "0.1.0"
 click = "8.1.2"
 itsdangerous = "1.1.0"
@@ -17,7 +17,7 @@ SQLAlchemy = "1.4.27"
 aioredis = "2.0.1"
 fastavro = "1.10.0"
 aiokafka = "^0.7.2"
-pilot-platform-common = "0.3.0"
+pilot-platform-common = "0.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "7.1.2"
