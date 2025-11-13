@@ -198,7 +198,7 @@ def copy(
             source_id=source_folder.id,
             destination_id=destination_folder.id,
         )
-        click.echo(f'Exception occurred while performing copy operation:{e}')
+        click.echo(f'Exception occurred while performing copy operation: {e}')
         try:
             notification_client.set_status(PipelineStatus.FAILURE)
             notification_client.send_notifications()
