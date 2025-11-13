@@ -71,15 +71,25 @@ def share_dataset_version(
         settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY, settings.S3_URL, settings.S3_INTERNAL_HTTPS
     )
 
-    dataset_version = dataset_service_client.get_dataset_version(version_id)
+    dataset_version_obj = dataset_service_client.get_dataset_version(version_id)
+    dataset_version_location = dataset_version_obj['location']
+    dataset_code = dataset_version_obj['dataset_code']
+    dataset_version = dataset_version_obj['version']
     destination_folder = metadata_service_client.get_name_folder(
         username=operator, project_code=destination_project_code, zone=ZoneType.GREENROOM
     )
 
     share_unique_id = dt.datetime.now(tz=dt.timezone.utc).strftime('%Y-%m-%d') + '-' + str(get_timestamp())
-    destination_folder_name = f'{dataset_version["dataset_code"]}-v{dataset_version["version"]}-{share_unique_id}'
+    destination_folder_name = f'{dataset_code}-v{dataset_version}-{share_unique_id}'
 
     try:
+        logger.audit(
+            'Attempting to share dataset version.',
+            project_code=destination_project_code,
+            operator=operator,
+            dataset_code=dataset_code,
+            dataset_version=dataset_version,
+        )
         dataset_version_destination_folder = Node(
             {
                 'name': destination_folder_name,
@@ -100,7 +110,7 @@ def share_dataset_version(
         temp_file_path = Path(f'{temp_extract_to_path}.zip')
 
         try:
-            version_file = FileBucketLocation(dataset_version['location'])
+            version_file = FileBucketLocation(dataset_version_location)
             loop.run_until_complete(
                 minio_client.client.download_object(
                     version_file.bucket_name, version_file.object_path, str(temp_file_path)
@@ -142,8 +152,22 @@ def share_dataset_version(
             status=JobStatus.SUCCEED,
         )
         click.echo('Copy dataset version operation has been finished successfully.')
+        logger.audit(
+            'Successfully managed to share dataset version.',
+            project_code=destination_project_code,
+            operator=operator,
+            dataset_code=dataset_code,
+            dataset_version=dataset_version,
+        )
     except Exception as e:
-        click.echo(f'Exception occurred while performing copy dataset version operation:{e}')
+        logger.audit(
+            'Received an unexpected error while attempting to share dataset version.',
+            project_code=destination_project_code,
+            operator=operator,
+            dataset_code=dataset_code,
+            dataset_version=dataset_version,
+        )
+        click.echo(f'Exception occurred while performing copy dataset version operation: {e}')
         try:
             dataops_client.update_job(
                 session_id=session_id,
