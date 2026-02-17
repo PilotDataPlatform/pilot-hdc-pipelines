@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 import asyncio
-import os
 from pathlib import Path
 
 from operations.duplicated_file_names import DuplicatedFileNames

@@ -56,7 +56,7 @@ repos:
           'flake8-builtins==1.5.3',  # A
           'flake8-comprehensions==3.10.0',  # C4
           'flake8-debugger==4.1.2',  # T1
-          'flake8-logging-format==0.7.5',  # G
+          'flake8-logging-format==1.0.0',  # G
           'flake8-use-fstring==1.4.0',  # FS
           'flake8-print==5.0.0',  # T2
         ]
