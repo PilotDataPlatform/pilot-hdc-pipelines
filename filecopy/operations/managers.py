@@ -5,7 +5,6 @@
 # You may not use this file except in compliance with the License.
 
 import asyncio
-import os
 from pathlib import Path
 
 from operations.duplicated_file_names import DuplicatedFileNames
@@ -310,11 +309,11 @@ class DeleteManager(NodeManager):
             # also remove the it from upload cache if it exists
             # so the key will be <zone>/<bucket>/<object_path>
             # please make sure it is same in upload service
-            bucket_prefix = {1: 'core'}.get(node.zone, 'greenroom')
-            obj_path = os.path.join(bucket_prefix, node.container_code, node.parent_path, node.name)
-
-            if self.redis_client.check_by_key(obj_path):
-                self.redis_client.delete_by_key(obj_path)
+            # bucket_prefix = {1: 'core'}.get(node.zone, 'greenroom')
+            # obj_path = os.path.join(bucket_prefix, node.container_code, node.parent_path, node.name)
+            #
+            # if self.redis_client.check_by_key(obj_path):
+            #     self.redis_client.delete_by_key(obj_path)
 
 
 class DeletePreparationManager(NodeManager):
