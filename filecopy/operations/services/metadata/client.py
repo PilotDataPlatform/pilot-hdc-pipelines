@@ -287,13 +287,13 @@ class MetadataServiceClient:
             # minio://http://<end_point>/bucket/user/object_path
             for item in trash_node:
                 if item['type'] == ResourceType.FILE:
-                    # Remove from minio
-                    src_minio_path = item['storage'].get('location_uri').split('//')[-1]
-                    _, src_bucket, src_obj_path = tuple(src_minio_path.split('/', 2))
-
+                    # # Remove from minio
+                    # src_minio_path = item['storage'].get('location_uri').split('//')[-1]
+                    # _, src_bucket, src_obj_path = tuple(src_minio_path.split('/', 2))
+                    #
                     loop = asyncio.get_event_loop()
-                    loop.run_until_complete(minio_client.remove_object(src_bucket, src_obj_path))
-                    logger.info(f'Minio Delete {src_bucket}/{src_obj_path} Success')
+                    # loop.run_until_complete(minio_client.remove_object(src_bucket, src_obj_path))
+                    # logger.info(f'Minio Delete {src_bucket}/{src_obj_path} Success')
 
                     # Add activity log
                     loop.run_until_complete(
