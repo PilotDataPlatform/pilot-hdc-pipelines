@@ -19,7 +19,6 @@ from operations.minio_boto3_client import MinioBoto3Client
 from operations.models import ZoneType
 from operations.services.dataops.client import DataopsServiceClient
 from operations.services.dataops.client import JobStatus
-from operations.services.dataops.client import ResourceLockOperation
 from operations.services.metadata.client import MetadataServiceClient
 from operations.services.notification.client import NotificationServiceClient
 from operations.services.notification.models import NotificationType
@@ -129,7 +128,7 @@ def delete(
         project = loop.run_until_complete(metadata_service_client.get_project_by_code(project_code))
 
         try:
-            dataops_client.lock_resources(delete_preparation_manager.write_lock_paths, ResourceLockOperation.WRITE)
+            # dataops_client.lock_resources(delete_preparation_manager.write_lock_paths, ResourceLockOperation.WRITE)
 
             pipeline_name = 'data_delete_folder'
             pipeline_desc = 'the script will delete the folder in greenroom/core recursively'
@@ -152,7 +151,8 @@ def delete(
             delete_manager.archive_nodes()
 
         finally:
-            dataops_client.unlock_resources(delete_preparation_manager.write_lock_paths, ResourceLockOperation.WRITE)
+            pass
+            # dataops_client.unlock_resources(delete_preparation_manager.write_lock_paths, ResourceLockOperation.WRITE)
 
         dataops_client.update_job(
             session_id=session_id,
