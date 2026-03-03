@@ -64,6 +64,13 @@ class ItemStatus(str, Enum):
     ARCHIVED = 'ARCHIVED'
 
 
+class FileBucketLocation:
+    def __init__(self, location: str) -> None:
+        self.location = location
+        self.file_full_path = location.split('//')[-1]
+        _, self.bucket_name, self.object_path = tuple(self.file_full_path.split('/', 2))
+
+
 class Node(dict):
     """Store information about one node."""
 
@@ -150,6 +157,13 @@ class Node(dict):
             display_path = display_path.relative_to('/')
 
         return display_path
+
+    @property
+    def file_bucket_location(self) -> FileBucketLocation | None:
+        if self.is_file:
+            return FileBucketLocation(self['storage']['location_uri'])
+
+        return None
 
     def get_attributes(self) -> dict[str, Any]:
         return self['extended']['extra'].get('attributes', {})

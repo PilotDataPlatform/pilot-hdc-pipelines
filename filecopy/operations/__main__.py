@@ -8,6 +8,7 @@ import logging
 
 from operations.app import app
 from operations.commands.copy import copy
+from operations.commands.copy_to_central_node import copy_to_central_node
 from operations.commands.delete import delete
 from operations.commands.share_dataset_version import share_dataset_version
 
@@ -17,4 +18,5 @@ if __name__ == '__main__':
     app.add_command(copy)
     app.add_command(delete)
     app.add_command(share_dataset_version)
+    app.add_command(copy_to_central_node)
     app()
