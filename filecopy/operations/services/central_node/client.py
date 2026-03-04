@@ -151,7 +151,7 @@ class CentralNodeClient:
                 raise
 
         logger.error(f'Chunk {chunk_number} failed after {retries} attempts.')
-        raise
+        raise Exception(f'Failed to upload chunk {chunk_number} after {retries} attempts.')
 
     async def upload_file_to_project(
         self,
@@ -172,10 +172,15 @@ class CentralNodeClient:
 
         semaphore = asyncio.Semaphore(max_concurrent)
 
+        def read_chunk_data(chunk_number: int) -> bytes:
+            offset = (chunk_number - 1) * chunk_size
+            with file_path.open('rb') as f:
+                f.seek(offset)
+                return f.read(chunk_size)
+
         async def upload_chunk(
             client: httpx.AsyncClient,
             chunk_number: int,
-            data: bytes,
         ) -> httpx.Response:
             async with semaphore:
                 try:
@@ -186,27 +191,22 @@ class CentralNodeClient:
                     logger.exception(f'Failed to get upload url for chunk {chunk_number}.')
                     raise
 
+                data = await asyncio.to_thread(read_chunk_data, chunk_number)
+
                 return await self.upload_chunk_with_retries(client, chunk_number, data, upload_url, retries=3)
 
         total_bytes = file_path.stat().st_size
         total_chunks = math.ceil(total_bytes / chunk_size)
 
         logger.info(
-            f'Staring "{destination_file_name}" ({total_bytes} bytes) file upload '
+            f'Starting "{destination_file_name}" ({total_bytes} bytes) file upload '
             f'in {total_chunks} chunk(s) of {chunk_size} bytes '
             f'(max {max_concurrent} concurrent) to folder "{destination_folder_name}" '
             f'in the project "{project_code}" on the central node.'
         )
 
         async with httpx.AsyncClient(timeout=self.upload_timeout) as upload_client:
-            tasks = []
-            with file_path.open('rb') as f:
-                for index in range(total_chunks):
-                    chunk_data = f.read(chunk_size)
-                    if not chunk_data:
-                        break
-                    tasks.append(upload_chunk(upload_client, index + 1, chunk_data))
-
+            tasks = [upload_chunk(upload_client, index + 1) for index in range(total_chunks)]
             await asyncio.gather(*tasks)
 
         return await self.file_post_upload(

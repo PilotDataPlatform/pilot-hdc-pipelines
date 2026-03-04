@@ -88,7 +88,9 @@ async def copy_to_central_node(
     source_project_code = source_file.container_code
     copy_unique_id = dt.datetime.now(tz=dt.timezone.utc).strftime('%Y-%m-%d') + '-' + str(get_timestamp())
     source_file_name, *extensions = source_file.name.rsplit('.', 1)
-    destination_file_name = '.'.join([source_file_name, copy_unique_id, '.'.join(extensions)])
+    destination_file_name = f'{source_file_name}-{copy_unique_id}'
+    if extensions:
+        destination_file_name += f'.{".".join(extensions)}'
 
     try:
         logger.audit(
