@@ -4,8 +4,10 @@
 # Version 3.0 (the "License") available at https://www.gnu.org/licenses/agpl-3.0.en.html.
 # You may not use this file except in compliance with the License.
 
+import jwt as pyjwt
 import pytest
 from operations.services.approval.client import ApprovalServiceClient
+from operations.services.central_node.client import CentralNodeClient
 from operations.services.dataops.client import DataopsServiceClient
 from operations.services.metadata.client import MetadataServiceClient
 
@@ -26,3 +28,14 @@ def metadata_service_client(httpserver) -> MetadataServiceClient:
 def approval_service_client(httpserver, fake) -> ApprovalServiceClient:
     request_id = 'request_id'
     yield ApprovalServiceClient(httpserver.url_for('/'), request_id)
+
+
+@pytest.fixture
+def central_node_client(httpserver, fake) -> CentralNodeClient:
+    username = fake.user_name()
+    token = pyjwt.encode(
+        {'preferred_username': username},
+        key='secret',
+        algorithm='HS256',
+    )
+    return CentralNodeClient(endpoint=httpserver.url_for('/'), access_token=token, session_id=fake.uuid4())
