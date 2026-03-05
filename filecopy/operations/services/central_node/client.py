@@ -138,8 +138,8 @@ class CentralNodeClient:
                 response.raise_for_status()
                 logger.info(f'Chunk {chunk_number} uploaded successfully.')
                 return response
-            except (httpx.NetworkError, httpx.TimeoutException):
-                if attempt <= retries:
+            except httpx.TransportError:
+                if attempt < retries:
                     wait_time = backoff_factor * (2 ** (attempt - 1))
                     logger.warning(
                         f'Chunk {chunk_number} upload failed (attempt {attempt}/{retries}). '
@@ -196,7 +196,7 @@ class CentralNodeClient:
                 return await self.upload_chunk_with_retries(client, chunk_number, data, upload_url, retries=3)
 
         total_bytes = file_path.stat().st_size
-        total_chunks = math.ceil(total_bytes / chunk_size)
+        total_chunks = max(1, math.ceil(total_bytes / chunk_size))
 
         logger.info(
             f'Starting "{destination_file_name}" ({total_bytes} bytes) file upload '

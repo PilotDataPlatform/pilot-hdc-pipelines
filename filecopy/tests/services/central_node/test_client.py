@@ -12,6 +12,8 @@ import pytest
 from operations.services.central_node.client import CentralNodeClient
 from pytest_httpserver import HTTPServer
 from tests.fixtures.fake import Faker
+from werkzeug import Request
+from werkzeug import Response
 
 
 class TestCentralNodeClient:
@@ -145,12 +147,15 @@ class TestCentralNodeClient:
     async def test_upload_chunk_with_retries_raises_after_exhausting_retries(
         self, central_node_client: CentralNodeClient, httpserver: HTTPServer, fake: Faker
     ):
+        def drop_connection(request: Request) -> Response:
+            raise ConnectionError
+
         for _ in range(3):
-            httpserver.expect_ordered_request('/upload', method='PUT').respond_with_data(status=500)
+            httpserver.expect_ordered_request('/upload', method='PUT').respond_with_handler(drop_connection)
         upload_url = httpserver.url_for('/upload')
 
         async with httpx.AsyncClient() as client:
-            with pytest.raises(httpx.HTTPStatusError):
+            with pytest.raises(Exception, match='1 after 3 attempts'):
                 await central_node_client.upload_chunk_with_retries(
                     client, chunk_number=1, data=fake.binary(5), upload_url=upload_url, retries=3, backoff_factor=0
                 )
