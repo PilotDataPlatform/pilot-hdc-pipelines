@@ -22,7 +22,7 @@ class CentralNodeClient:
     ) -> None:
         self.endpoint = endpoint
         self.access_token = access_token
-        self.decoded_token = pyjwt.decode(access_token, options={'verify_signature': False}, algorithms=['RS256'])
+        self.decoded_token = pyjwt.decode(access_token, options={'verify_signature': False})
         self.username = self.decoded_token['preferred_username']
         self.session_id = session_id
         self.timeout = timeout
