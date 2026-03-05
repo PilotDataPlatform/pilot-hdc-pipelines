@@ -18,7 +18,10 @@ class Faker(faker.Faker):
     def name(self) -> str:
         return Faker().pystr(max_chars=10)
 
+    def project_code(self) -> str:
+        return self.pystr_format('?#' * 10).lower()
+
 
 @pytest.fixture
 def fake() -> Faker:
-    yield Faker()
+    return Faker()

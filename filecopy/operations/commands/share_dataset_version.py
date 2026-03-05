@@ -17,6 +17,7 @@ from operations.config import get_settings
 from operations.logger import logger
 from operations.managers import ShareDatasetManager
 from operations.minio_boto3_client import MinioBoto3Client
+from operations.models import FileBucketLocation
 from operations.models import Node
 from operations.models import ZoneType
 from operations.models import get_timestamp
@@ -25,13 +26,6 @@ from operations.services.dataops.client import JobStatus
 from operations.services.dataset.client import DatasetServiceClient
 from operations.services.metadata.client import MetadataServiceClient
 from operations.traverser import Traverser
-
-
-class FileBucketLocation:
-    def __init__(self, location: str) -> None:
-        self.location = location
-        self.file_full_path = location.split('//')[-1]
-        _, self.bucket_name, self.object_path = tuple(self.file_full_path.split('/', 2))
 
 
 @click.command()
