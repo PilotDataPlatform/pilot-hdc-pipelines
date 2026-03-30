@@ -40,6 +40,15 @@ jobs:
       registry_subpath: 'pipelines'
     secrets: inherit
 
+  update_gitops_hdc:
+    needs: [build_and_publish_hdc]
+    if: github.event_name != 'pull_request'
+    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/update_gitops_versions.yml@main
+    with:
+      service_key: auth-service
+      image_tag: ${{ needs.build_and_publish_hdc.outputs.app_version }}
+    secrets: inherit
+
   deploy_hdc:
     needs: [build_and_publish_hdc]
     uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/trigger_deployment.yml@main
