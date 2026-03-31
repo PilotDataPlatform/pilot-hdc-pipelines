@@ -45,14 +45,8 @@ jobs:
     if: github.event_name != 'pull_request'
     uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/update_gitops_versions.yml@main
     with:
-      service_key: auth-service
-      image_tag: ${{ needs.build_and_publish_hdc.outputs.app_version }}
-    secrets: inherit
-
-  deploy_hdc:
-    needs: [build_and_publish_hdc]
-    uses: PilotDataPlatform/pilot-hdc-ci-tools/.github/workflows/trigger_deployment.yml@main
-    with:
-      hdc_service_name: 'bids-validator'
-      pyproject_folder: 'bids-validator'
+      service_key: bids-validator
+      image_tag: "n47w5524.c1.de1.container-registry.ovh.net/hdc-services-image/pipelines/bids-validator:bids-validator-${{ needs.build_and_publish_hdc.outputs.app_version }}"
+      versions_file: clusters/dev/apps/queue-consumer/values.yaml
+      yaml_path: '.queue-service.extraEnv.bids_validate_image'
     secrets: inherit
