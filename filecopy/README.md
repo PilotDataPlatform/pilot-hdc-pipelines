@@ -51,8 +51,7 @@ This project can also be started using [Docker](https://www.docker.com/get-start
 
 ## Resources
 
-* [Pilot Platform API Documentation](https://pilotdataplatform.github.io/api-docs/)
-* [Pilot Platform Helm Charts](https://github.com/PilotDataPlatform/helm-charts/)
+* [Pilot Platform API Documentation](https://pilotdataplatform.github.io/pilot-hdc-service-docs/)
 
 ## Contribution
 
